@@ -12,9 +12,10 @@ from langgraph.graph import END, StateGraph
 from src.agent.state import AgentGraphState
 from src.core.rag import get_rag_retriever
 from src.core.sql_executor import SQLExecutor
+from src.core.csv_executor import CSVExecutor
 from src.core.sql_generator import SQLGenerator
 from src.core.sql_validator import SQLValidator
-from src.models.config import get_app_config
+from src.models.config import get_app_config, get_settings
 from src.models.schemas import (
     AgentState,
     FinalResponse,
@@ -40,12 +41,22 @@ class AnalystAgent:
     def __init__(self):
         """Initialize agent with configuration."""
         self.config = get_app_config()
+        self.settings = get_settings()
+
         self.rag = get_rag_retriever(
             persist_dir=self.config.llm.provider  # Placeholder
         )
         self.sql_generator = SQLGenerator(self.config.llm)
         self.sql_validator = SQLValidator(self.config.safety)
-        self.sql_executor = SQLExecutor(self.config.database)
+
+        # Use CSV executor if in CSV mode, otherwise use regular SQL executor
+        if self.config.database.type == "csv":
+            self.sql_executor = CSVExecutor(self.settings.csv_data_dir)
+            print(f"✓ Using CSV mode with data from: {self.settings.csv_data_dir}")
+        else:
+            self.sql_executor = SQLExecutor(self.config.database)
+            print(f"✓ Using database mode: {self.config.database.type}")
+
         self.audit_logger = get_audit_logger(self.config.audit_log_path)
 
         # Build graph

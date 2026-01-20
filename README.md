@@ -10,6 +10,7 @@ A production-grade AI-powered data analyst that combines Retrieval-Augmented Gen
 - **Full Transparency**: Every query shows SQL, sources, and assumptions
 - **Audit Trail**: Complete logging for compliance and debugging
 - **Agentic Actions**: Optional exports, charts, and integrations
+- **🆕 CSV Mode**: Query CSV files directly - **no database required!** Perfect for demos and testing
 
 ## 🎯 Quick Start with Docker (Recommended)
 
@@ -40,6 +41,32 @@ That's it! You now have:
 - ✅ **REST API** - FastAPI backend at http://localhost:8000
 - ✅ **Sample Database** - PostgreSQL with example data
 - ✅ **Knowledge Base** - Pre-loaded with metrics and data dictionary
+
+---
+
+## 🚀 CSV Mode (No Database Required!)
+
+Want to try without setting up PostgreSQL? Use **CSV Mode**!
+
+```bash
+# 1. Generate sample CSV data
+python scripts/generate_sample_data.py
+
+# 2. Load CSV metadata into vector store
+python scripts/init_csv_metadata.py
+
+# 3. Configure for CSV mode
+cp .env.example .env
+nano .env  # Set DATABASE_TYPE=csv and add OPENAI_API_KEY
+
+# 4. Run!
+uvicorn src.main:app --reload
+# Or: python src/cli.py --interactive
+```
+
+Now query your CSV files with natural language! See **[CSV_MODE.md](CSV_MODE.md)** for full details.
+
+---
 
 ## 💻 Manual Installation
 

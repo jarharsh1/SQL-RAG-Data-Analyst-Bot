@@ -26,10 +26,13 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
 
     # Database Configuration
-    database_url: str
-    database_type: str = "postgresql"
+    database_url: str = "not_required_for_csv"  # Not required when using CSV mode
+    database_type: str = "csv"  # csv, postgresql, mysql, snowflake
     database_query_timeout: int = 30
     database_pool_size: int = 5
+
+    # CSV Mode Configuration
+    csv_data_dir: str = "./data/csv"
 
     # Safety Configuration
     max_result_rows: int = 10000
@@ -119,8 +122,10 @@ class Settings(BaseSettings):
             raise ValueError("OPENAI_API_KEY is required when using OpenAI")
         if self.llm_provider == "anthropic" and not self.anthropic_api_key:
             raise ValueError("ANTHROPIC_API_KEY is required when using Anthropic")
-        if not self.database_url:
-            raise ValueError("DATABASE_URL is required")
+
+        # DATABASE_URL is not required for CSV mode
+        if self.database_type != "csv" and not self.database_url:
+            raise ValueError("DATABASE_URL is required when not using CSV mode")
 
 
 @lru_cache()
