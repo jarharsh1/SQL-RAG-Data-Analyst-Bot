@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (example)
+  database:
+    image: postgres:15-alpine
+    container_name: analyst-db
+    environment:
+      POSTGRES_DB: analytics_db
+      POSTGRES_USER: analyst_user
+      POSTGRES_PASSWORD: analyst_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analyst_user -d analytics_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - analyst-network
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: analyst-backend
+    environment:
+      # LLM Configuration
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4-turbo-preview}
+
+      # Database
+      DATABASE_URL: postgresql://analyst_user:analyst_password@database:5432/analytics_db
+      DATABASE_TYPE: postgresql
+
+      # Safety
+      MAX_RESULT_ROWS: 10000
+      ALLOWED_TABLES: orders,customers,products,order_line_items,sales_reps
+      BLOCKED_COLUMNS: ssn,credit_card,password
+
+      # Paths
+      CHROMA_PERSIST_DIR: /app/data/vector_store
+      AUDIT_LOG_PATH: /app/data/audit_logs
+
+      # App
+      APP_ENV: production
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - vector_store:/app/data/vector_store
+      - audit_logs:/app/data/audit_logs
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - analyst-network
+    restart: unless-stopped
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: analyst-frontend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - analyst-network
+    restart: unless-stopped
+
+networks:
+  analyst-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  vector_store:
+  audit_logs:

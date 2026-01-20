@@ -11,15 +11,46 @@ A production-grade AI-powered data analyst that combines Retrieval-Augmented Gen
 - **Audit Trail**: Complete logging for compliance and debugging
 - **Agentic Actions**: Optional exports, charts, and integrations
 
-## Quick Start
+## 🎯 Quick Start with Docker (Recommended)
+
+Get the full application running in under 5 minutes:
+
+```bash
+# 1. Clone and navigate
+git clone <repo-url>
+cd SQL-RAG-Data-Analyst-Bot
+
+# 2. Set up environment
+cp .env.example .env
+# Edit .env and add your OpenAI API key
+
+# 3. Start everything (frontend + backend + database)
+docker-compose up -d
+
+# 4. Initialize knowledge base
+docker-compose exec backend python scripts/init_knowledge_base.py
+
+# 5. Open your browser
+# Web UI: http://localhost:3000
+# API Docs: http://localhost:8000/docs
+```
+
+That's it! You now have:
+- ✅ **Modern Web UI** - Chat-like interface at http://localhost:3000
+- ✅ **REST API** - FastAPI backend at http://localhost:8000
+- ✅ **Sample Database** - PostgreSQL with example data
+- ✅ **Knowledge Base** - Pre-loaded with metrics and data dictionary
+
+## 💻 Manual Installation
 
 ### Prerequisites
 
 - Python 3.11+
+- Node.js 18+ (for frontend)
 - PostgreSQL, MySQL, or Snowflake database (read-only access)
 - OpenAI or Anthropic API key
 
-### Installation
+### Backend Setup
 
 ```bash
 # Clone repository
@@ -73,12 +104,23 @@ python scripts/init_knowledge_base.py \
 ### Run Application
 
 ```bash
-# Start FastAPI server
+# Start FastAPI backend
 uvicorn src.main:app --reload --port 8000
 
-# Or use the CLI
+# In a new terminal, start frontend
+cd frontend
+npm install
+npm run dev
+
+# Or use the CLI (no UI needed)
 python src/cli.py "What was revenue by region last quarter?"
+python src/cli.py --interactive  # Interactive mode
 ```
+
+Now access:
+- **Web UI**: http://localhost:3000
+- **API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
 
 ### API Usage
 
@@ -91,15 +133,137 @@ curl -X POST http://localhost:8000/api/query \
   }'
 ```
 
+## 🖥️ User Interfaces
+
+### Web UI (Recommended)
+
+The React web application provides a modern, chat-like interface:
+
+**Features:**
+- 💬 Chat-style question/answer interface
+- 📊 Interactive data tables with sorting
+- 📝 SQL query display with syntax highlighting
+- 🔍 Full transparency panel showing:
+  - Tables accessed
+  - Metric definitions used
+  - Assumptions made
+  - Citations from knowledge base
+- 📥 CSV export functionality
+- ⚡ Real-time query status
+- 🎨 Beautiful dark-mode UI
+
+**Screenshot:**
+```
+┌─────────────────────────────────────────────────────┐
+│  SQL + RAG Analyst                      ● Connected │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  You: What was revenue by region last quarter?     │
+│                                                     │
+│  ┌───────────────────────────────────────────┐     │
+│  │ Answer                                    │     │
+│  │ Last quarter (Q4 2024), total revenue... │     │
+│  │                                           │     │
+│  │ ▼ Data Results (4 rows)                  │     │
+│  │ ▼ SQL Query                              │     │
+│  │ ▼ Transparency & Citations               │     │
+│  └───────────────────────────────────────────┘     │
+│                                                     │
+│  Ask a question...                       [Send →]  │
+└─────────────────────────────────────────────────────┘
+```
+
+### CLI Tool
+
+For terminal users, the CLI provides rich formatted output:
+
+```bash
+# Single query
+python src/cli.py "What was revenue by region last quarter?"
+
+# Interactive mode
+python src/cli.py --interactive
+```
+
+**CLI Features:**
+- 🎨 Color-coded output with Rich formatting
+- 📊 Pretty-printed tables
+- 🔍 Syntax-highlighted SQL
+- ⚡ Fast and lightweight
+- 📝 Full transparency display
+- 💾 Audit logging
+
+**Example Output:**
+```
+╭──────────────────────────────────────────╮
+│ SQL + RAG Data Analyst                   │
+│ AI-powered data analysis with transparency│
+╰──────────────────────────────────────────╯
+
+Question: What was revenue by region last quarter?
+
+╭─ Answer ──────────────────────────────────╮
+│ Found 4 results for your question...     │
+╰───────────────────────────────────────────╯
+
+SQL Query:
+  1  SELECT
+  2    c.region,
+  3    SUM(oli.price * oli.quantity) as revenue
+  4  FROM orders o
+  5  ...
+
+Results (4 rows):
+┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ Region         ┃ Revenue   ┃
+┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ North America  │ 5,200,000 │
+│ Europe         │ 3,100,000 │
+...
+```
+
+### REST API
+
+Programmatic access via FastAPI:
+
+```python
+import requests
+
+response = requests.post("http://localhost:8000/api/query", json={
+    "question": "What was revenue by region last quarter?",
+    "user_id": "analyst@company.com"
+})
+
+data = response.json()
+print(data["answer"])
+print(data["transparency"]["sql_executed"])
+```
+
 ## Project Structure
 
 ```
 SQL-RAG-Data-Analyst-Bot/
 ├── ARCHITECTURE.md              # System design and architecture
+├── DEPLOYMENT.md                # Deployment guide
 ├── README.md                    # This file
 ├── requirements.txt             # Python dependencies
 ├── .env.example                 # Environment template
 ├── pyproject.toml               # Python project config
+├── docker-compose.yml           # Docker Compose configuration
+├── Dockerfile                   # Backend Docker image
+│
+├── frontend/                    # React web application
+│   ├── src/
+│   │   ├── App.tsx              # Main React component
+│   │   ├── components/          # UI components
+│   │   │   ├── QueryInput.tsx   # Question input
+│   │   │   ├── ResponseCard.tsx # Result display
+│   │   │   └── DataTable.tsx    # Data table component
+│   │   ├── services/api.ts      # API client
+│   │   └── types/               # TypeScript types
+│   ├── package.json
+│   ├── Dockerfile               # Frontend Docker image
+│   └── nginx.conf               # Nginx configuration
 │
 ├── src/
 │   ├── main.py                  # FastAPI application entry point
