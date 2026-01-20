@@ -1,0 +1,180 @@
+tables:
+  - name: customers
+    description: Customer master table
+    primary_key: customer_id
+    columns:
+      - name: customer_id
+        type: INTEGER
+        description: Unique customer identifier
+      - name: email
+        type: VARCHAR
+        description: Customer email address
+      - name: first_name
+        type: VARCHAR
+        description: Customer first name
+      - name: last_name
+        type: VARCHAR
+        description: Customer last name
+      - name: region
+        type: VARCHAR
+        description: Geographic region (North America, Europe, Asia, South America)
+      - name: country
+        type: VARCHAR
+        description: Customer country
+      - name: status
+        type: VARCHAR
+        description: Account status (active, inactive, suspended)
+      - name: created_at
+        type: TIMESTAMP
+        description: Account creation timestamp
+      - name: updated_at
+        type: TIMESTAMP
+        description: Last update timestamp
+
+  - name: orders
+    description: Order transactions
+    primary_key: order_id
+    foreign_keys:
+      - column: customer_id
+        references: customers.customer_id
+    columns:
+      - name: order_id
+        type: INTEGER
+        description: Unique order identifier
+      - name: customer_id
+        type: INTEGER
+        description: Customer who placed the order
+      - name: order_date
+        type: DATE
+        description: Date order was placed
+      - name: status
+        type: VARCHAR
+        description: Order status (pending, completed, cancelled, refunded)
+      - name: total_amount
+        type: DECIMAL
+        description: Total order amount including tax
+      - name: subtotal
+        type: DECIMAL
+        description: Order subtotal before tax
+      - name: tax_amount
+        type: DECIMAL
+        description: Tax amount
+      - name: shipping_amount
+        type: DECIMAL
+        description: Shipping cost
+      - name: created_at
+        type: TIMESTAMP
+        description: Order creation timestamp
+
+  - name: order_line_items
+    description: Individual items in orders
+    primary_key: line_item_id
+    foreign_keys:
+      - column: order_id
+        references: orders.order_id
+      - column: product_id
+        references: products.product_id
+    columns:
+      - name: line_item_id
+        type: INTEGER
+        description: Unique line item identifier
+      - name: order_id
+        type: INTEGER
+        description: Associated order
+      - name: product_id
+        type: INTEGER
+        description: Product purchased
+      - name: quantity
+        type: INTEGER
+        description: Number of units
+      - name: price
+        type: DECIMAL
+        description: Unit price at time of purchase
+      - name: discount_amount
+        type: DECIMAL
+        description: Discount applied to this item
+
+  - name: products
+    description: Product catalog
+    primary_key: product_id
+    columns:
+      - name: product_id
+        type: INTEGER
+        description: Unique product identifier
+      - name: product_name
+        type: VARCHAR
+        description: Product name
+      - name: category
+        type: VARCHAR
+        description: Product category
+      - name: subcategory
+        type: VARCHAR
+        description: Product subcategory
+      - name: unit_price
+        type: DECIMAL
+        description: Current unit price
+      - name: cost
+        type: DECIMAL
+        description: Cost of goods sold per unit
+      - name: status
+        type: VARCHAR
+        description: Product status (active, discontinued)
+      - name: created_at
+        type: TIMESTAMP
+        description: Product creation date
+
+  - name: sales_reps
+    description: Sales representatives
+    primary_key: rep_id
+    columns:
+      - name: rep_id
+        type: INTEGER
+        description: Unique sales rep identifier
+      - name: first_name
+        type: VARCHAR
+        description: Sales rep first name
+      - name: last_name
+        type: VARCHAR
+        description: Sales rep last name
+      - name: email
+        type: VARCHAR
+        description: Sales rep email
+      - name: region
+        type: VARCHAR
+        description: Assigned region
+      - name: hire_date
+        type: DATE
+        description: Date hired
+
+business_rules:
+  - name: exclude_cancelled_orders
+    description: By default, exclude cancelled orders from revenue calculations
+    sql_filter: "status != 'cancelled'"
+    applies_to:
+      - orders
+      - order_line_items
+
+  - name: active_customers_only
+    description: Unless specified, only count active customers
+    sql_filter: "status = 'active'"
+    applies_to:
+      - customers
+
+  - name: current_year_default
+    description: When no time range specified, default to current year
+    sql_filter: "EXTRACT(YEAR FROM order_date) = EXTRACT(YEAR FROM CURRENT_DATE)"
+    applies_to:
+      - orders
+
+relationships:
+  - from: orders.customer_id
+    to: customers.customer_id
+    type: many_to_one
+
+  - from: order_line_items.order_id
+    to: orders.order_id
+    type: many_to_one
+
+  - from: order_line_items.product_id
+    to: products.product_id
+    type: many_to_one

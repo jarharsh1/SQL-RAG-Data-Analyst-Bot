@@ -1,0 +1,51 @@
+# Core Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-dotenv==1.0.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# LLM & AI
+langchain==0.1.4
+langchain-openai==0.0.5
+langchain-anthropic==0.1.1
+langgraph==0.0.20
+openai==1.10.0
+anthropic==0.8.1
+
+# Vector Store & Embeddings
+chromadb==0.4.22
+sentence-transformers==2.3.1
+
+# Database
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+pymysql==1.1.0
+snowflake-sqlalchemy==1.5.1
+
+# SQL Parsing & Validation
+sqlglot==20.11.0
+sqlparse==0.4.4
+
+# Logging & Monitoring
+structlog==24.1.0
+python-json-logger==2.0.7
+
+# Utilities
+pyyaml==6.0.1
+python-dateutil==2.8.2
+requests==2.31.0
+
+# Development & Testing
+pytest==7.4.4
+pytest-cov==4.1.0
+pytest-asyncio==0.23.3
+black==24.1.1
+ruff==0.1.14
+mypy==1.8.0
+httpx==0.26.0
+
+# Optional: For agentic tools
+# pandas==2.2.0
+# matplotlib==3.8.2
+# jira==3.6.0
